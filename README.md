@@ -1,85 +1,77 @@
-# Barber App - Gympass para Barbearias
+# BarberApp - Plataforma de Agendamento de Barbearia com Assinatura
 
-Uma plataforma de assinatura para barbearias, permitindo que clientes encontrem e marquem cortes em barbearias participantes através de um mapa interativo.
+## 📋 Visão Geral
+
+BarberApp é uma plataforma web que funciona como um Gympass/WelHub para barbearias. Permite que clientes encontrem e marquem cortes em barbearias próximas através de um mapa interativo do Google Maps, com sistema de pagamento por assinatura.
 
 ## 🎯 Funcionalidades
 
-- **Autenticação Multi-Papel**: Cliente, Comerciante (Barbearia), Admin (TI)
-- **Mapa Interativo**: Google Maps com localização de barbearias próximas
-- **Agendamento**: Marcar cortes em qualquer barbearia
-- **Planos de Assinatura**: Diferentes modalidades de pagamento
-- **Dashboard do Cliente**: Visualizar agendamentos e plano ativo
-- **Painel Comerciante**: Gerenciar horários e agendamentos
-- **Painel Admin**: Gerenciar usuários, barbearias e planos
-- **Responsivo**: Totalmente otimizado para mobile e desktop
+### Para Clientes
+- 📍 Mapa com barbearias próximas (Google Maps)
+- 📅 Agendamento de cortes
+- 💳 Planos de assinatura mensal
+
+### Para Administradores de Barbearias
+- ⚙️ Gerenciar horários de funcionamento
+- ✂️ Gerenciar serviços oferecidos
+- 📅 Visualizar agendamentos
+
+### Para Admin TI
+- 👥 Gerenciar usuários
+- 🏪 Gerenciar barbearias
+- 📊 Relatórios e analytics
 
 ## 🛠️ Stack Tecnológico
 
-### Backend
-- Node.js com TypeScript
-- Express.js
-- PostgreSQL (banco de dados)
-- JWT para autenticação
-- Stripe/PagSeguro para pagamentos
-
 ### Frontend
-- React 18+ com TypeScript
-- Vite (build tool)
-- TailwindCSS (styling)
+- React 18 com TypeScript
+- Tailwind CSS
+- Vite
+- React Router
+- Zustand (State Management)
+- React Hook Form
 - Google Maps API
-- React Router (navegação)
-- Axios (HTTP client)
+
+### Backend
+- Node.js com Express
+- TypeScript
+- MongoDB
+- JWT para autenticação
+- Stripe para pagamentos
+
+## 📦 Instalação
+
+```bash
+git clone https://github.com/joaovamorim/barber-app.git
+cd barber-app
+pnpm install
+cp .env.example .env
+pnpm dev
+```
 
 ## 📁 Estrutura do Projeto
 
 ```
 barber-app/
-├── backend/
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── routes/
-│   │   ├── middleware/
-│   │   ├── services/
-│   │   ├── models/
-│   │   ├── config/
-│   │   └── server.ts
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── .env.example
-├── frontend/
-│   ├── src/
+├── src/
+│   ├── client/
 │   │   ├── components/
 │   │   ├── pages/
-│   │   ├── services/
-│   │   ├── hooks/
+│   │   ├── api/
+│   │   ├── store/
 │   │   ├── types/
-│   │   ├── App.tsx
 │   │   └── main.tsx
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── vite.config.ts
-│   └── tailwind.config.js
+│   └── server/
+│       └── index.ts
+├── package.json
 └── README.md
 ```
 
-## 🚀 Como Começar
+## 🚀 Scripts Disponíveis
 
 ```bash
-# Backend
-cd backend
-pnpm install
-pnpm dev
-
-# Frontend (em outro terminal)
-cd frontend
-pnpm install
-pnpm dev
+pnpm dev              # Inicia servidor e cliente
+pnpm dev:server       # Inicia apenas o servidor
+pnpm dev:client       # Inicia apenas o cliente
+pnpm build            # Build para produção
 ```
-
-## 📝 Variáveis de Ambiente
-
-Veja `.env.example` em cada pasta para as variáveis necessárias.
-
-## 👨‍💻 Desenvolvedor
-
-João Vamorim
