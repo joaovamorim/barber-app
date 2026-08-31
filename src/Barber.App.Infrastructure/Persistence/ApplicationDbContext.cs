@@ -76,9 +76,10 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser<Guid>, Identi
     {
         builder.ToTable("refresh_tokens");
         builder.HasKey(r => r.Id);
-        builder.Property(r => r.Token).IsRequired();
+        builder.Property(r => r.TokenHash).IsRequired();
         builder.Property(r => r.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(r => r.ExpiresAt).IsRequired();
         builder.HasIndex(r => r.UserId);
+        builder.HasIndex(r => r.TokenHash).IsUnique(false);
     }
 }
