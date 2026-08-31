@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Barber.App.Infrastructure.Persistence;
 using Barber.App.Api.Middlewares;
 using Barber.App.Infrastructure.MultiTenancy;
+using Barber.App.Infrastructure.Seeding;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,8 +33,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
-// TenantProvider (placeholder; implement logic in Fase 2)
-builder.Services.AddScoped<ITenantProvider, NoopTenantProvider>();
+// TenantProvider (scoped) - actual implementation
+builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 
 // CORS (restrictive default - adjust per environment)
 builder.Services.AddCors(options =>
@@ -49,6 +50,21 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Run DB seeder in Development (and optionally other environments)
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await DbSeeder.SeedAsync(db);
+    }
+    catch (Exception ex)
+    {
+        Log.Fatal(ex, "An error occurred while seeding the database.");
+        throw;
+    }
+}
+
 // Middlewares
 if (app.Environment.IsDevelopment())
 {
@@ -57,6 +73,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseSerilogRequestLogging();
+
+// Tenant resolution middleware must run early, before authentication/authorization
+app.UseMiddleware<TenantResolutionMiddleware>();
 
 // Global exception handling middleware
 app.UseMiddleware<GlobalExceptionMiddleware>();
