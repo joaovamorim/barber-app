@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Barber.App.Domain\Barber.App.Domain.csproj" />
+    <PackageReference Include="FluentValidation" Version="11.5.0" />
+  </ItemGroup>
+</Project>

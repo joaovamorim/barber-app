@@ -1,85 +1,26 @@
-# Barber App - Gympass para Barbearias
+# Saas Scheduler - Fase 1 (Fundação)
 
-Uma plataforma de assinatura para barbearias, permitindo que clientes encontrem e marquem cortes em barbearias participantes através de um mapa interativo.
+Objetivo: criar a fundação do SaaS (solution + projetos, Docker Compose, EF Core, Serilog, HealthChecks, OpenAPI).
 
-## 🎯 Funcionalidades
+Requisitos principais (neste esqueleto):
+- .NET 10 / ASP.NET Core 10 (TargetFramework: net10.0)
+- EF Core 10 (Npgsql provider)
+- Serilog
+- Swagger / HealthChecks
+- Multi-tenant preparado (Tenant entity + ITenantProvider)
+- Docker Compose de desenvolvimento com Postgres (+ Redis, RabbitMQ opcionais)
 
-- **Autenticação Multi-Papel**: Cliente, Comerciante (Barbearia), Admin (TI)
-- **Mapa Interativo**: Google Maps com localização de barbearias próximas
-- **Agendamento**: Marcar cortes em qualquer barbearia
-- **Planos de Assinatura**: Diferentes modalidades de pagamento
-- **Dashboard do Cliente**: Visualizar agendamentos e plano ativo
-- **Painel Comerciante**: Gerenciar horários e agendamentos
-- **Painel Admin**: Gerenciar usuários, barbearias e planos
-- **Responsivo**: Totalmente otimizado para mobile e desktop
+Como rodar localmente (dev):
+1. Copie `.env.example` para `.env` e ajuste valores.
+2. docker-compose up -d
+3. Configurar connection string (DefaultConnection) em appsettings.Development.json ou variáveis de ambiente.
+4. Rodar migrations:
+   dotnet ef migrations add InitialCreate -p src/Saas.Scheduler.Infrastructure -s src/Saas.Scheduler.Api
+   dotnet ef database update -p src/Saas.Scheduler.Infrastructure -s src/Saas.Scheduler.Api
+5. Rodar API:
+   dotnet run --project src/Saas.Scheduler.Api
 
-## 🛠️ Stack Tecnológico
-
-### Backend
-- Node.js com TypeScript
-- Express.js
-- PostgreSQL (banco de dados)
-- JWT para autenticação
-- Stripe/PagSeguro para pagamentos
-
-### Frontend
-- React 18+ com TypeScript
-- Vite (build tool)
-- TailwindCSS (styling)
-- Google Maps API
-- React Router (navegação)
-- Axios (HTTP client)
-
-## 📁 Estrutura do Projeto
-
-```
-barber-app/
-├── backend/
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── routes/
-│   │   ├── middleware/
-│   │   ├── services/
-│   │   ├── models/
-│   │   ├── config/
-│   │   └── server.ts
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── .env.example
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   ├── hooks/
-│   │   ├── types/
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── vite.config.ts
-│   └── tailwind.config.js
-└── README.md
-```
-
-## 🚀 Como Começar
-
-```bash
-# Backend
-cd backend
-pnpm install
-pnpm dev
-
-# Frontend (em outro terminal)
-cd frontend
-pnpm install
-pnpm dev
-```
-
-## 📝 Variáveis de Ambiente
-
-Veja `.env.example` em cada pasta para as variáveis necessárias.
-
-## 👨‍💻 Desenvolvedor
-
-João Vamorim
+Notas:
+- Multi-tenant: TenantId será resolvido por middleware/serviço (implementação planeada na FASE 2).
+- Não versione secrets; utilize secret manager em produção.
+- Próxima entrega: criação de migrations iniciais, seed de desenvolvimento (Barbearia Demo), implementação do TenantProvider middleware, e configuração do ASP.NET Identity (Fase 3).
