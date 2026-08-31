@@ -12,10 +12,10 @@ public static class DbSeeder
 
     public static async Task SeedAsync(ApplicationDbContext context)
     {
-        // For development convenience we'll use EnsureCreated to build the schema from the model.
-        // In production, prefer using explicit EF Migrations and avoid EnsureCreated.
-        _logger.Information("Ensuring database is created and applying seed data (if missing)");
-        context.Database.EnsureCreated();
+        _logger.Information("Applying migrations and seeding demo data (if missing)");
+
+        // Apply migrations (preferred) - in development it's OK
+        await context.Database.MigrateAsync();
 
         if (!await context.Tenants.AnyAsync())
         {

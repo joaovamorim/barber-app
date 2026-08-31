@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -7,6 +8,13 @@ using Barber.App.Infrastructure.Persistence;
 using Barber.App.Api.Middlewares;
 using Barber.App.Infrastructure.MultiTenancy;
 using Barber.App.Infrastructure.Seeding;
+using Barber.App.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Barber.App.Application.Interfaces;
+using Barber.App.Infrastructure.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +43,44 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // TenantProvider (scoped) - actual implementation
 builder.Services.AddScoped<ITenantProvider, TenantProvider>();
+
+// Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
+{
+    options.User.RequireUniqueEmail = true;
+    options.Password.RequireDigit = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 6;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
+// JWT Authentication
+var jwtSecret = builder.Configuration["JWT__Secret"] ?? "REPLACE_WITH_STRONG_SECRET";
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = key,
+        ClockSkew = TimeSpan.FromSeconds(30)
+    };
+});
+
+// Token service
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 // CORS (restrictive default - adjust per environment)
 builder.Services.AddCors(options =>
