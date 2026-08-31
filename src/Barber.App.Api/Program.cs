@@ -1,5 +1,3 @@
-using System;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -15,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Barber.App.Application.Interfaces;
 using Barber.App.Infrastructure.Authentication;
+using Barber.App.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,6 +80,7 @@ builder.Services.AddAuthentication(options =>
 
 // Token service
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // CORS (restrictive default - adjust per environment)
 builder.Services.AddCors(options =>
@@ -102,7 +102,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await DbSeeder.SeedAsync(db);
+        await DbSeeder.SeedAsync(db, scope.ServiceProvider);
     }
     catch (Exception ex)
     {

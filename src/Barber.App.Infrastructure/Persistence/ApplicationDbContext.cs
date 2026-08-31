@@ -1,12 +1,12 @@
-using System;
-using System.Linq;
-using System.Reflection;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Barber.App.Domain.Entities;
 using Barber.App.Infrastructure.MultiTenancy;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Linq;
+using System.Reflection;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using System;
 
 namespace Barber.App.Infrastructure.Persistence;
 public class ApplicationDbContext : IdentityDbContext<IdentityUser<Guid>, IdentityRole<Guid>, Guid>
@@ -20,12 +20,14 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser<Guid>, Identi
     }
 
     public DbSet<Tenant> Tenants { get; set; } = default!;
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<Tenant>(ConfigureTenant);
+        modelBuilder.Entity<RefreshToken>(ConfigureRefreshToken);
 
         // Apply global query filter for entities implementing IHasTenant
         var hasTenantInterface = typeof(Barber.App.Domain.IHasTenant);
@@ -40,18 +42,14 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser<Guid>, Identi
 
     private void SetGlobalQueryFilter<TEntity>(ModelBuilder builder) where TEntity : class, Barber.App.Domain.IHasTenant
     {
-        // Build expression: e => (_tenantProvider.TenantId == null) || e.TenantId == _tenantProvider.TenantId
-
         var parameter = System.Linq.Expressions.Expression.Parameter(typeof(TEntity), "e");
         var tenantProperty = System.Linq.Expressions.Expression.Property(parameter, "TenantId"); // Guid
 
         var providerExpr = System.Linq.Expressions.Expression.Constant(_tenantProvider);
         var providerTenantIdProperty = System.Linq.Expressions.Expression.Property(providerExpr, "TenantId"); // Guid?
 
-        // providerTenantId == null
         var providerIsNull = System.Linq.Expressions.Expression.Equal(providerTenantIdProperty, System.Linq.Expressions.Expression.Constant(null, typeof(Guid?)));
 
-        // e.TenantId == (Guid)providerTenantId
         var convertProviderTenant = System.Linq.Expressions.Expression.Convert(providerTenantIdProperty, typeof(Guid));
         var tenantEquals = System.Linq.Expressions.Expression.Equal(tenantProperty, convertProviderTenant);
 
@@ -72,5 +70,15 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser<Guid>, Identi
         builder.HasIndex(t => t.Slug).IsUnique();
         builder.Property(t => t.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(t => t.UpdatedAt).HasDefaultValueSql("now()");
+    }
+
+    private void ConfigureRefreshToken(EntityTypeBuilder<RefreshToken> builder)
+    {
+        builder.ToTable("refresh_tokens");
+        builder.HasKey(r => r.Id);
+        builder.Property(r => r.Token).IsRequired();
+        builder.Property(r => r.CreatedAt).HasDefaultValueSql("now()");
+        builder.Property(r => r.ExpiresAt).IsRequired();
+        builder.HasIndex(r => r.UserId);
     }
 }

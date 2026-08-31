@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
-using Barber.App.Infrastructure.Identity;
-using Barber.App.Infrastructure.Authentication;
+using Barber.App.Infrastructure.Services;
 using Barber.App.Application.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Barber.App.Infrastructure.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Barber.App.Infrastructure.MultiTenancy;
 
@@ -12,14 +12,14 @@ namespace Barber.App.Api.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
+    private readonly IAuthService _authService;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ITokenService _tokenService;
     private readonly ITenantProvider _tenantProvider;
 
-    public AuthController(UserManager<ApplicationUser> userManager, ITokenService tokenService, ITenantProvider tenantProvider)
+    public AuthController(IAuthService authService, UserManager<ApplicationUser> userManager, ITenantProvider tenantProvider)
     {
+        _authService = authService;
         _userManager = userManager;
-        _tokenService = tokenService;
         _tenantProvider = tenantProvider;
     }
 
@@ -33,7 +33,6 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest model)
     {
-        // Require tenant context for registration (owner creates user within a tenant)
         var tenantId = _tenantProvider.TenantId;
         if (tenantId == null)
             return BadRequest(new { error = "Tenant not resolved. Include X-Tenant-Slug header or use tenant subdomain." });
@@ -52,9 +51,8 @@ public class AuthController : ControllerBase
             return BadRequest(result.Errors);
         }
 
-        // For now, do not assign roles (will be handled by admin later)
-        var token = _tokenService.GenerateJwtToken(user);
-        return Ok(new { token });
+        var (accessToken, refreshToken) = await _authService.LoginAsync(model.Email, model.Password);
+        return Ok(new { accessToken, refreshToken });
     }
 
     public class LoginRequest
@@ -66,15 +64,39 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest model)
     {
-        var user = await _userManager.FindByEmailAsync(model.Email);
-        if (user == null)
+        try
+        {
+            var (accessToken, refreshToken) = await _authService.LoginAsync(model.Email, model.Password);
+            return Ok(new { accessToken, refreshToken });
+        }
+        catch
+        {
             return Unauthorized(new { error = "Invalid credentials" });
+        }
+    }
 
-        var valid = await _userManager.CheckPasswordAsync(user, model.Password);
-        if (!valid)
-            return Unauthorized(new { error = "Invalid credentials" });
+    public class RefreshRequest { public string RefreshToken { get; set; } = default!; }
 
-        var token = _tokenService.GenerateJwtToken(user);
-        return Ok(new { token });
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshRequest model)
+    {
+        try
+        {
+            var (accessToken, refreshToken) = await _authService.RefreshAsync(model.RefreshToken);
+            return Ok(new { accessToken, refreshToken });
+        }
+        catch
+        {
+            return Unauthorized(new { error = "Invalid refresh token" });
+        }
+    }
+
+    public class RevokeRequest { public string RefreshToken { get; set; } = default!; }
+
+    [HttpPost("revoke")]
+    public async Task<IActionResult> Revoke([FromBody] RevokeRequest model)
+    {
+        await _authService.RevokeAsync(model.RefreshToken);
+        return Ok(new { revoked = true });
     }
 }

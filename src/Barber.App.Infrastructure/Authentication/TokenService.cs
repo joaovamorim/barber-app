@@ -1,11 +1,11 @@
 using System;
-using Barber.App.Application.Interfaces;
 using Barber.App.Infrastructure.Identity;
+using Barber.App.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text;
+using System.Security.Claims;
 
 namespace Barber.App.Infrastructure.Authentication;
 
